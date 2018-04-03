@@ -33,9 +33,12 @@ public class MessageSender implements Runnable {
                 
             }
         } while (!connected);
+        
         BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        
         while (true) {
             try {
+            	// Enquanto não for digitado nada a thread vai se manter em repouso.
                 while (!in.ready()) {
                     Thread.sleep(100);
                 }

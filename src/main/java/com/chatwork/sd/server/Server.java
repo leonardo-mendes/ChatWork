@@ -14,7 +14,7 @@ public class Server extends Thread {
     private final static int BUFFER = 1024;
     
     private DatagramSocket socket;
-    private ArrayList<InetAddress> clientAddresses;
+	private ArrayList<InetAddress> clientAddresses;
     private ArrayList<Integer> clientPorts;
     private HashSet<String> existingClients;
     
@@ -25,37 +25,43 @@ public class Server extends Thread {
         existingClients = new HashSet();
     }
 
-	 public void run() {
-	        byte[] buf = new byte[BUFFER];
-	        while (true) {
-	            try {
-	                Arrays.fill(buf, (byte)0);
-	                DatagramPacket packet = new DatagramPacket(buf, buf.length);
-	                socket.receive(packet);
-	                
-	                String content = new String(buf, buf.length);
-	                
-	                InetAddress clientAddress = packet.getAddress();
-	                int clientPort = packet.getPort();
-	                
-	                String id = clientAddress.toString() + "," + clientPort;
-	                if (!existingClients.contains(id)) {
-	                    existingClients.add( id );
-	                    clientPorts.add( clientPort );
-	                    clientAddresses.add(clientAddress);
-	                }
-	                
-	                System.out.println(id + " : " + content);
-	                byte[] data = (id + " : " +  content).getBytes();
-	                for (int i=0; i < clientAddresses.size(); i++) {
-	                    InetAddress cl = clientAddresses.get(i);
-	                    int cp = clientPorts.get(i);
-	                    packet = new DatagramPacket(data, data.length, cl, cp);
-	                    socket.send(packet);
-	                }
-	            } catch(Exception e) {
-	                System.err.println(e);
-	            }
-	        }
-	    }
+	public void run() {
+        byte[] buf = new byte[BUFFER];
+        while (true) {
+            try {
+            	
+                Arrays.fill(buf, (byte)0);
+                DatagramPacket packet = new DatagramPacket(buf, buf.length);
+                socket.receive(packet);
+                
+                String content = new String(buf);
+                
+                InetAddress clientAddress = packet.getAddress();
+                int clientPort = packet.getPort();    
+                // O cliente vai ser identficado pelo seu Ip-Porta
+                String idClient = "IpAddress-Port "+clientAddress.toString() + "-"+clientPort;
+                
+                // Validar se o usuário que enviou a mensagem já vai estar mapeado.
+                if (!existingClients.contains(idClient)) {
+                    existingClients.add( idClient );
+                    clientPorts.add( clientPort );
+                    clientAddresses.add(clientAddress);
+                }
+                
+                byte[] message = (idClient + " said: " +  content + "\n ..>").getBytes();
+                
+                // Envio para todos os clients que tem salvo ip e porta.
+                for (int i=0; i < clientAddresses.size(); i++) {
+                    InetAddress address = clientAddresses.get(i);
+                    int port = clientPorts.get(i);
+                    packet = new DatagramPacket(message, message.length, address, port);
+                    socket.send(packet);
+                }
+
+                
+            } catch(Exception e) {
+                System.err.println(e);
+            }
+         }
+     } 
 }   
